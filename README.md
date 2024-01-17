@@ -1,12 +1,13 @@
-<h1>GitLab CI/CD For Terraform; Validate, Plan, Apply, Destroy</h1>
+<h1>Terraform Infrastructure as Code (IaC) with GitLab CI/CD</h1>
 
 <h2>Description:</h2>
 
-- <b>GitLab CI integration to start build automatically<br>
-- <b>Stages in the pipeline include Validate, Plan, Apply, and Destroy<b/>
-- <b>Using Terraform to provision AWS EC2, S3 (Stafefile) and Security Groups via Secret Key config in GitLab<b/>
-- <b>Installation of Ansible on EC2 using user data<b/>
-- <b>Installation of Jenkins via Ansible Playbook<b/>
+- <b>Implemented a GitLab CI/CD pipeline with distinct stages for validation, planning, application, and destruction of infrastructure.<b/>
+- <b>Implemented a validation stage (validate) to ensure the correctness of Terraform configurations before applying changes<b/>
+- <b>Utilized the terraform plan command to generate an execution plan and saved it as an artifact (tfplan) for review<b/>
+- <b>Implemented a destruction stage (destroy) with manual approval, providing a controlled process for tearing down infrastructure<b/>
+- <b>Managed AWS credentials securely within the GitLab CI/CD pipeline, ensuring the protection of sensitive information<b/>
+- <b>Dynamically configured the Terraform Docker image (hashicorp/terraform:light) with the required environment settings.<b/>
 
 <h2>Project Architecture</h2>
 
@@ -15,15 +16,14 @@
 
 <h2>Objectives:</h2>
 
-- <b> Understand how developers automatically check their code to catch errors and release their software without manual work.<b/>
+- <b> Gained hands-on experience in automating infrastructure deployment, validation, and destruction using Terraform in a CI/CD environment.<b/>
 
 <h2>Languages and Utilities Used:</h2>
 
 - <b>AWS </b>
-- <b>GitLab </b>
+- <b>GitLab CI/CD </b>
 - <b>Terraform </b>
-- <b>Ansible </b>
-- <b>Jenkins </b>
+- <b>Ansible Playbook </b>
 
 <h2>Program Overview:</h2>
 
