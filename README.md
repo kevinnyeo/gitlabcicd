@@ -292,5 +292,97 @@ destroy:
   dependencies: 
     - apply
 ```
+ 
+## gitlab.yml script
+```
+stages:
+  - validate
+  - plan
+  - apply
+  - destroy
+
+image:
+  name: hashicorp/terraform:light
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+before_script:
+  - export AWS_ACCESS_KEY=${AWS_ACCESS_KEY_ID}
+  - export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+  - rm -rf .terraform
+  - terraform --version
+  - terraform init
+
+validate:
+  stage: validate
+  script:
+    - terraform validate
+
+plan:
+  stage: plan
+  script:
+    - terraform plan -out=tfplan
+  artifacts:
+    paths:
+      - tfplan
+
+apply:
+  stage: apply
+  script:
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - plan
+
+destroy:
+  stage: destroy
+  script:
+    - terraform init 
+    - terraform destroy -auto-approve
+  when: manual
+  dependencies: 
+    - apply
+```
+<br/>
+<p align="center">
+<b>[Step 6] Gitlab.yml scripting</b> <br/>
+  1. Create a .gitlab.yml file and in the scripts  <br/>
+  2. After committing, it will automatically start the build <br/>
+  3. Check pipeline console and AWS console. We can see that our AWS resources has been successfully provisioned. <br/>
+  <img src="https://i.imgur.com/spHpPMf.png" height="80%" width="80%" /><br/>
+  <img src="https://i.imgur.com/K7zJlH3.png" height="80%" width="80%" /><br/>
+  <img src="https://i.imgur.com/a5bxdVm.png" height="80%" width="80%" /><br/>
+<br/>
+  4. Connect to EC2 instance. We can see that there is a cloned Ansible directory that was created using our shell script. <br/>
+  <img src="https://i.imgur.com/2ElHuBF.png" height="80%" width="80%" /><br/>
+  <img src="https://i.imgur.com/wrkBPbi.png" height="80%" width="80%" /><br/>
+<br/>
+  5. To access Jenkins, enter machine public ip via port 8080 <br/>
+  Obtain Jenkins password via provided path <br/>
+  <img src="https://i.imgur.com/jDMS5uS.png" height="80%" width="80%" /><br/>
+  <img src="https://i.imgur.com/MeCfch7.png" height="80%" width="80%" /><br/>
+<br/>
+
+<p align="center">
+<b>[Step 7] Destroy</b> <br/>
+  1. Destroy stage can be called in Gitlab pipeline by pressing on the gear icon.  <br/>
+  We can see all AWS resources created in the pipeline has been destroyed. <br/>
+  <img src="https://i.imgur.com/xtH2wbg.png" height="80%" width="80%" /><br/>
+  <img src="https://i.imgur.com/fLnQYQ7.png" height="80%" width="80%" /><br/>
+  <img src="https://i.imgur.com/fBOqIVP.png" height="80%" width="80%" /><br/>
+<br/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
