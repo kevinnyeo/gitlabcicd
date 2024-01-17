@@ -1,4 +1,4 @@
-<h1>GitLab CI/CD For Terraform; Managing Infrastructure</h1>
+<h1>GitLab CI/CD For Terraform; Validate, Plan, Apply, Destroy</h1>
 
 <h2>Description:</h2>
 
