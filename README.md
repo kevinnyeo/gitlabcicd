@@ -27,8 +27,7 @@
 
 <h2>Program Overview:</h2>
 
-We will be using GitLab CI/CD as a system that helps developers automatically check their code to catch errors and, if everything is okay, <br/>
-automatically release their software without manual work. It's like having robots that test and deliver your code for you, saving time and reducing errors.<br/>
+We will be using GitLab CI/CD as a system that helps developers automatically check their code to catch errors and automatically release the software without manual work. <br/>
 <br/>
 Based on the infrastructure layout, the lab will be broken down into the following sections:<br/>
 
