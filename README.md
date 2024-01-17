@@ -63,7 +63,127 @@ Based on the infrastructure layout, the lab will be broken down into the followi
 <br/>
 
 
-  
+<p align="center">
+<b>[Step 3] Terraform Files</b> <br/>
+  1. Create a new repository in GitLab and upload terraform files <br/>
+ <img src="https://i.imgur.com/eBnCt0D.png" height="80%" width="80%" /><br/>
+<br/>
+
+## main.tf<br/>
+
+Creates our resources in AWS (EC2, security groups) and auto installation of jenkins via shell script install_jenkins.sh
+```text
+resource "aws_security_group" "Jenkins-sg" {
+  name        = "Jenkins-Security Group"
+  description = "Open 22,443,80,8080"
+
+#Defines a single ingress rule to allow traffic on all specified ports
+  ingress = [
+    for port in [22, 80, 443, 8080] : {
+      description      = "TLS from VPC"
+      from_port        = port
+      to_port          = port
+      protocol         = "tcp"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+    }
+  ]
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "Jenkins-sg"
+  }
+}
+
+
+resource "aws_instance" "web" {
+  ami                    = "ami-0c7217cdde317cfec"  #change Ami based on region and aws image type
+  instance_type          = "t2.medium" 
+  key_name               = "demokp"   #key pair must be created already
+  vpc_security_group_ids = [aws_security_group.Jenkins-sg.id]
+  user_data              = templatefile("./install_jenkins.sh", {})
+
+  tags = {
+    Name = "Jenkins-sonar" #instance name
+  }
+  root_block_device {
+    volume_size = 8
+  }
+}
+```
+
+## provider.tf<br/>
+
+Defines and configures the AWS provider for managing resources on AWS
+```text
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+# Configure the AWS Provider
+provider "aws" {
+  region = "us-east-1"     #change to desired region.
+}
+```
+
+## backend.tf<br/>
+
+Specifying a backend configuration for storing the Terraform state in existing S3 bucket
+```text
+terraform {
+  backend "s3" {
+    bucket = "kevinyyh-testbucket" # Replace with your actual S3 bucket name
+    key    = "Gitlab/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+```
+
+## install_jenkins.sh<br/>
+
+We will be cloning an Ansible Playbook Repo from https://github.com/Aj7Ay/ANSIBLE<br/>
+This is a shell script that is ran inside main.tf which executes the following tasks: <br/>
+1. Updates the package lists
+2. Installs the software-properties-common package, which provides the add-apt-repository command used later in the script.
+3. Adds the Ansible PPA (Personal Package Archive) to the system, allowing the installation of Ansible
+4. Installation of Ansible on the system
+5. Installs the Git version control system on the system
+6. Creates a directory named "Ansible" and changes the current working directory to it.
+7. Cloning a Git repository from the specified URL into the current directory. The repository contains Ansible playbooks and related files.
+8. Executes an Ansible playbook named "Jenkins-playbook.yml" with the inventory set to localhost. The playbook is responsible for configuring Jenkins.
+```text
+#!/bin/bash
+exec > >(tee -i /var/log/user-data.log)
+exec 2>&1
+sudo apt update -y
+sudo apt install software-properties-common
+sudo add-apt-repository --yes --update ppa:ansible/ansible
+sudo apt install ansible -y
+sudo apt install git -y 
+mkdir Ansible && cd Ansible
+pwd
+git clone https://github.com/Aj7Ay/ANSIBLE.git
+cd ANSIBLE
+ansible-playbook -i localhost Jenkins-playbook.yml
+```
+
+
+
+
 
 
 
