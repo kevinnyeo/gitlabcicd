@@ -42,9 +42,9 @@ Based on the infrastructure layout, the lab will be broken down into the followi
 
 [Step 5] Configuring GitLab CICD<br/> 
 
-[Step 5] Gitlab.yml scripting <br/> 
+[Step 6] Gitlab.yml scripting <br/> 
 
-[Step 5] Destroying resources<br/> 
+[Step 7] Destroying resources<br/> 
 
 <h2>Program walk-through:</h2>
 
@@ -180,19 +180,117 @@ git clone https://github.com/Aj7Ay/ANSIBLE.git
 cd ANSIBLE
 ansible-playbook -i localhost Jenkins-playbook.yml
 ```
+<p align="center">
+<b>[Step 4] Configuring GitLab Variables</b> <br/>
+  1. Under GitLab CICD Settings, add in AWS Access and Secret keys when creating our IAM user in step 1  <br/>
+ <img src="https://i.imgur.com/6pwGi97.png" height="80%" width="80%" /><br/>
+<br/>
 
+<p align="center">
+<b>[Step 5] Configuring GitLab CICD </b> <br/>
+  1. Create a gitlab-ci.yml file and include the following scripts:
+<br/>
 
+## stages<br/>
+This section defines the stages in the CI/CD pipeline. In your configuration, you have four stages: validate, plan, apply, and destroy. <br/>
+```
+stages:
+  - validate
+  - plan
+  - apply
+  - destroy
+```
 
+## image<br/>
+Specifies the Docker image to use for the GitLab Runner. In this case, I'm using the "hashicorp/terraform:light" image for running Terraform commands. 
+The entrypoint lines set the environment to include commonly used paths. <br/>
+```
+image:
+  name: hashicorp/terraform:light
+  entrypoint:
+    - '/usr/bin/env'
+    - 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+```
 
+## before_script<br/>
+This section defines commands to run before each job in the pipeline. <br/>
 
+- The first two lines export the AWS access key and secret access key as environment variables, which are used for AWS authentication in your Terraform configuration.
 
+- rm -rf .terraform: This removes any existing Terraform configuration files and state files to ensure a clean environment.
 
+- terraform --version: Displays the Terraform version for debugging and version confirmation.
 
+- terraform init: Initializes Terraform in the working directory, setting up the environment for Terraform operations.
 
+```
+before_script:
+  - export AWS_ACCESS_KEY=${AWS_ACCESS_KEY_ID}
+  - export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+  - rm -rf .terraform
+  - terraform --version
+  - terraform init
+```
 
+## validate
+Defines a job named "validate" in the "validate" stage. This job validates the Terraform configuration.<br/>
 
+- script: Specifies the commands to run as part of this job. In this case, it runs terraform validate to check the syntax and structure of your Terraform files.
+```
+validate:
+  stage: validate
+  script:
+    - terraform validate
+```
 
+## plan
+This job, in the "plan" stage, creates a Terraform plan. <br/>
 
+- script: Runs terraform plan -out=tfplan, which generates a plan and saves it as "tfplan" in the working directory.
 
+- artifacts: Specifies the artifacts (output files) of this job. In this case, it specifies that the "tfplan" file should be preserved as an artifact.
+```
+plan:
+  stage: plan
+  script:
+    - terraform plan -out=tfplan
+  artifacts:
+    paths:
+      - tfplan
+```
+
+## apply
+This job, in the "apply" stage, applies the Terraform plan generated in the previous stage.<br/>
+
+- script: Runs terraform apply -auto-approve tfplan, which applies the changes specified in the "tfplan" file.
+
+- dependencies: Specifies that this job depends on the successful completion of the "plan" job.
+```
+apply:
+  stage: apply
+  script:
+    - terraform apply -auto-approve tfplan
+  dependencies:
+    - plan
+```
+
+## destroy 
+This job, in the "destroy" stage, is intended for destroying the Terraform-managed resources. <br/>
+
+- script: Runs terraform init to initialize the Terraform environment and then runs terraform destroy -auto-approve to destroy the resources. The -auto-approve flag ensures non-interactive execution.
+
+- when: manual: Specifies that this job should be triggered manually by a user.
+
+- dependencies: Ensures that this job depends on the successful completion of the "apply" job, meaning you can only destroy resources that have been applied by a prior "apply" job.
+```
+destroy:
+  stage: destroy
+  script:
+    - terraform init
+    - terraform destroy -auto-approve
+  when: manual
+  dependencies: 
+    - apply
+```
 
 
